@@ -2,15 +2,27 @@
   "manifest_version": 3,
   "name": "Focus Shield",
   "version": "3.0",
-  "description": "Block distractions, track focus sessions, and stay productive.",
+
+"icons": {
+  "16": "icon16.png",
+  "48": "icon48.png",
+  "128": "icon128.png"
+},
+
+"description": "Block distractions, track focus sessions, and stay productive.",
   "permissions": ["storage", "tabs"],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "popup.html",
-    "default_title": "Focus Shield"
-  },
+  "default_popup": "popup.html",
+  "default_title": "Focus Shield",
+  "default_icon": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+},
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
