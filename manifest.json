@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Focus Shield",
+  "version": "3.0",
+  "description": "Block distractions, track focus sessions, and stay productive.",
+  "permissions": ["storage", "tabs"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Focus Shield"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["focus.html", "focus.js", "popup.html", "popup.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

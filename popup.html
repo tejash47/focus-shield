@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Focus Shield</title>
+<style>
+:root{
+  --bg:#0d0d10;--sf:#141418;--sf2:#1a1a1f;--bdr:#252530;
+  --accent:#7c6af7;--adim:rgba(124,106,247,.12);
+  --green:#34d399;--red:#f87171;--amber:#fbbf24;
+  --txt:#e8e8ec;--mid:#7878a0;--dim:#45455a;
+  --r:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:330px;background:var(--bg);color:var(--txt);font-family:-apple-system,'Segoe UI',system-ui,sans-serif;font-size:13px;overflow:hidden}
+
+/* HEADER */
+.hdr{padding:14px 16px 12px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:8px}
+.brand-ico{width:28px;height:28px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.brand-name{font-size:14px;font-weight:600;letter-spacing:-.3px}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.break-badge{display:none;font-size:10px;color:var(--green);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);border-radius:10px;padding:2px 8px;font-weight:500}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* TABS */
+.tabs{display:flex;padding:8px 8px 0;gap:2px}
+.tab{flex:1;padding:7px 4px;text-align:center;font-size:10px;font-weight:600;color:var(--dim);cursor:pointer;border-radius:6px 6px 0 0;transition:all .15s;letter-spacing:.4px;text-transform:uppercase}
+.tab:hover{color:var(--mid)}
+.tab.active{color:var(--accent);background:var(--adim)}
+
+/* PANELS */
+.panel{display:none;padding:14px 14px 16px}
+.panel.active{display:block}
+
+/* SECTION LABEL */
+.slbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.9px;color:var(--dim);margin-bottom:8px;margin-top:14px}
+.slbl:first-child{margin-top:0}
+
+/* INPUTS */
+input[type=time],input[type=text],input[type=number]{
+  width:100%;background:var(--sf2);border:1px solid var(--bdr);border-radius:var(--r);
+  color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:12px;
+  padding:8px 10px;outline:none;transition:border-color .15s
+}
+input[type=time]:focus,input[type=text]:focus,input[type=number]:focus{border-color:var(--accent)}
+input[type=number]{width:64px}
+
+/* TOGGLE */
+.trow{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--sf2);border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:6px}
+.tleft{display:flex;flex-direction:column;gap:2px}
+.ttitle{font-size:12px;font-weight:500;color:var(--txt)}
+.tdesc{font-size:10px;color:var(--dim)}
+.sw{position:relative;width:36px;height:20px;flex-shrink:0}
+.sw input{opacity:0;width:0;height:0}
+.sl{position:absolute;inset:0;background:var(--bdr);border-radius:20px;cursor:pointer;transition:.2s}
+.sl::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:var(--dim);border-radius:50%;transition:.2s}
+input:checked+.sl{background:var(--accent)}
+input:checked+.sl.hc{background:var(--red)}
+input:checked+.sl::before{transform:translateX(16px);background:#fff}
+
+/* SITES */
+.sites-list{display:flex;flex-direction:column;gap:4px;max-height:120px;overflow-y:auto;margin-bottom:8px;scrollbar-width:thin;scrollbar-color:var(--bdr) transparent}
+.site-item{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--sf2);border:1px solid var(--bdr);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mid)}
+.site-rm{background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px;line-height:1;padding:0 2px;transition:color .15s}
+.site-rm:hover{color:var(--red)}
+.add-row{display:flex;gap:6px}
+.add-row input{flex:1}
+
+/* BREAK WINDOWS */
+.brow{display:flex;align-items:center;gap:6px;background:var(--sf2);border:1px solid var(--bdr);border-radius:var(--r);padding:8px 10px;margin-bottom:6px}
+.brow input[type=time]{flex:1;background:transparent;border:none;border-bottom:1px solid var(--bdr);border-radius:0;padding:3px 4px;font-size:12px}
+.brow input[type=time]:focus{border-bottom-color:var(--accent)}
+.bsep{font-size:10px;color:var(--dim);white-space:nowrap}
+.blbl{font-size:10px;color:var(--green);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);border-radius:4px;padding:2px 7px;white-space:nowrap}
+.brm{background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px;line-height:1;padding:0 2px;transition:color .15s;margin-left:2px}
+.brm:hover{color:var(--red)}
+.break-active-hint{font-size:10px;color:var(--green);background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.15);border-radius:6px;padding:7px 10px;margin-bottom:8px;line-height:1.5}
+
+/* POMO */
+.pomo-disp{background:var(--sf2);border:1px solid var(--bdr);border-radius:var(--r);padding:16px;text-align:center;margin-bottom:10px}
+.pomo-time{font-family:'JetBrains Mono',monospace;font-size:38px;font-weight:500;letter-spacing:3px;color:var(--txt);line-height:1}
+.pomo-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-top:6px}
+.pomo-trk{width:100%;height:2px;background:var(--bdr);border-radius:99px;margin-top:12px;overflow:hidden}
+.pomo-trk-fill{height:100%;background:var(--accent);border-radius:99px;transition:width 1s linear}
+.pomo-ctrl{display:flex;gap:6px;margin-bottom:10px}
+.pomo-cfg{display:flex;gap:8px;align-items:center}
+.pomo-cfg label{font-size:10px;color:var(--dim)}
+
+/* STATS */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.scard{background:var(--sf2);border:1px solid var(--bdr);border-radius:var(--r);padding:10px 12px}
+.sv{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:var(--txt);line-height:1}
+.slb{font-size:10px;color:var(--dim);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+.c-acc{color:var(--accent)}.c-grn{color:var(--green)}
+
+/* BUTTONS */
+.btn{padding:8px 14px;border-radius:var(--r);border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;transition:all .15s}
+.btn-primary{background:var(--accent);color:#fff;flex:1}
+.btn-primary:hover{background:#6b59e8}
+.btn-ghost{background:var(--sf2);color:var(--mid);border:1px solid var(--bdr)}
+.btn-ghost:hover{color:var(--txt);border-color:var(--dim)}
+.btn-sm{padding:6px 10px;font-size:11px}
+.btn-ico{width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--sf2);border:1px solid var(--bdr);color:var(--mid);border-radius:var(--r)}
+.btn-ico:hover{color:var(--txt)}
+.save-row{display:flex;gap:6px;margin-top:14px}
+.divider{height:1px;background:var(--bdr);margin:12px 0}
+
+/* TOAST */
+#toast{position:fixed;bottom:12px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--sf2);border:1px solid var(--bdr);color:var(--green);font-size:11px;font-weight:500;padding:6px 14px;border-radius:20px;opacity:0;transition:all .2s;white-space:nowrap;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="brand">
+    <div class="brand-ico">🛡</div>
+    <span class="brand-name">Focus Shield</span>
+  </div>
+  <div class="hdr-right">
+    <span class="break-badge" id="breakBadge">on break ☕</span>
+    <div class="pulse"></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="timer">Timer</div>
+  <div class="tab" data-tab="breaks">Breaks</div>
+  <div class="tab" data-tab="sites">Sites</div>
+  <div class="tab" data-tab="settings">Settings</div>
+  <div class="tab" data-tab="stats">Stats</div>
+</div>
+
+<!-- ═══════════ TIMER ═══════════ -->
+<div class="panel active" id="tab-timer">
+  <div class="pomo-disp">
+    <div class="pomo-time" id="pomoClock">25:00</div>
+    <div class="pomo-lbl" id="pomoLabel">Focus Session</div>
+    <div class="pomo-trk"><div class="pomo-trk-fill" id="pomoBar" style="width:100%"></div></div>
+  </div>
+  <div class="pomo-ctrl">
+    <button class="btn btn-primary" id="pomoStartBtn">▶ Start</button>
+    <button class="btn btn-ico" id="pomoResetBtn" title="Reset">↺</button>
+    <button class="btn btn-ico" id="pomoSkipBtn" title="Skip">⏭</button>
+  </div>
+  <div class="slbl">Session Config</div>
+  <div class="pomo-cfg">
+    <label>Focus</label>
+    <input type="number" id="pomoFocus" value="25" min="1" max="90">
+    <label>Break</label>
+    <input type="number" id="pomoBreak" value="5" min="1" max="30">
+    <label style="margin-left:4px">min</label>
+  </div>
+  <div class="divider"></div>
+  <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim)">
+    <span id="sessionsToday">0</span> sessions today · <span id="pomoStreak">0</span>d streak 🔥
+  </div>
+</div>
+
+<!-- ═══════════ BREAKS ═══════════ -->
+<div class="panel" id="tab-breaks">
+  <p style="font-size:11px;color:var(--mid);line-height:1.6;margin-bottom:12px">
+    The extension <strong style="color:var(--green)">will not block</strong> any sites during your break windows. Add your daily break schedule below.
+  </p>
+
+  <div class="break-active-hint" id="breakActiveHint" style="display:none">
+    ☕ You are currently in a break window — sites are unblocked.
+  </div>
+
+  <div class="slbl">Your Break Windows</div>
+  <div id="breaksList"></div>
+  <button class="btn btn-ghost btn-sm" id="addBreakBtn" style="width:100%;margin-bottom:4px">+ Add Break Window</button>
+
+  <div class="divider"></div>
+  <div class="slbl">Quick Presets</div>
+  <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
+    <button class="btn btn-ghost btn-sm preset" data-s="09:00" data-e="09:15">Morning Tea</button>
+    <button class="btn btn-ghost btn-sm preset" data-s="13:00" data-e="14:00">Lunch</button>
+    <button class="btn btn-ghost btn-sm preset" data-s="16:00" data-e="16:30">Evening Break</button>
+    <button class="btn btn-ghost btn-sm preset" data-s="21:00" data-e="22:00">Night Wind-down</button>
+  </div>
+
+  <div class="save-row">
+    <button class="btn btn-primary" id="saveBreaksBtn" style="flex:1">Save Break Schedule</button>
+  </div>
+</div>
+
+<!-- ═══════════ SITES ═══════════ -->
+<div class="panel" id="tab-sites">
+  <div class="slbl">Blocked Domains</div>
+  <div class="sites-list" id="sitesList"></div>
+  <div class="add-row">
+    <input type="text" id="newSiteInput" placeholder="e.g. twitter.com">
+    <button class="btn btn-primary btn-sm" id="addSiteBtn">+ Add</button>
+  </div>
+  <div class="divider"></div>
+  <div class="slbl">Quick Add</div>
+  <div style="display:flex;flex-wrap:wrap;gap:5px">
+    <button class="btn btn-ghost btn-sm quick-add" data-site="twitter.com">Twitter</button>
+    <button class="btn btn-ghost btn-sm quick-add" data-site="tiktok.com">TikTok</button>
+    <button class="btn btn-ghost btn-sm quick-add" data-site="netflix.com">Netflix</button>
+    <button class="btn btn-ghost btn-sm quick-add" data-site="twitch.tv">Twitch</button>
+    <button class="btn btn-ghost btn-sm quick-add" data-site="discord.com">Discord</button>
+  </div>
+</div>
+
+<!-- ═══════════ SETTINGS ═══════════ -->
+<div class="panel" id="tab-settings">
+  <div class="slbl">Modes</div>
+
+  <div class="trow">
+    <div class="tleft">
+      <span class="ttitle">🔒 Hardcore Focus Mode</span>
+      <span class="tdesc">Zero bypass — blocks everything, no excuses</span>
+    </div>
+    <label class="sw"><input type="checkbox" id="hardcoreFocus"><span class="sl hc"></span></label>
+  </div>
+
+  <div class="trow">
+    <div class="tleft">
+      <span class="ttitle">Shield Active</span>
+      <span class="tdesc">Toggle all blocking on/off</span>
+    </div>
+    <label class="sw"><input type="checkbox" id="shieldActive" checked><span class="sl"></span></label>
+  </div>
+
+  <div class="trow">
+    <div class="tleft">
+      <span class="ttitle">Pomodoro Auto-Block</span>
+      <span class="tdesc">Only block during focus sessions</span>
+    </div>
+    <label class="sw"><input type="checkbox" id="pomoAutoBlock"><span class="sl"></span></label>
+  </div>
+
+  <div class="divider"></div>
+  <div class="slbl">Daily Focus Goal</div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <input type="number" id="focusGoalHours" value="4" min="1" max="16" style="width:64px">
+    <span style="font-size:11px;color:var(--mid)">hours / day</span>
+  </div>
+
+  <div class="save-row">
+    <button class="btn btn-primary" id="saveBtn" style="flex:1">Save Settings</button>
+  </div>
+</div>
+
+<!-- ═══════════ STATS ═══════════ -->
+<div class="panel" id="tab-stats">
+  <div class="slbl">Today</div>
+  <div class="sgrid">
+    <div class="scard"><div class="sv c-acc" id="statBlocked">0</div><div class="slb">Blocked</div></div>
+    <div class="scard"><div class="sv c-grn" id="statFocusMins">0</div><div class="slb">Focus mins</div></div>
+    <div class="scard"><div class="sv" id="statBypassed">0</div><div class="slb">Bypassed</div></div>
+    <div class="scard"><div class="sv" id="statSessions">0</div><div class="slb">Sessions</div></div>
+  </div>
+  <div class="slbl">All Time</div>
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <div class="trow" style="margin-bottom:0"><span style="font-size:11px;color:var(--mid)">Total blocked</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px" id="statTotalBlocked">0</span></div>
+    <div class="trow" style="margin-bottom:0"><span style="font-size:11px;color:var(--mid)">Total focus mins</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px" id="statTotalFocus">0</span></div>
+    <div class="trow" style="margin-bottom:0"><span style="font-size:11px;color:var(--mid)">Longest streak</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px" id="statLongestStreak">0d</span></div>
+  </div>
+  <div class="save-row">
+    <button class="btn btn-ghost btn-sm" id="resetStatsBtn" style="width:100%;color:var(--red);border-color:rgba(248,113,113,.25)">Reset Stats</button>
+  </div>
+</div>
+
+<div id="toast">✓ Saved</div>
+<script src="popup.js"></script>
+</body>
+</html>

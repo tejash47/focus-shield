@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Focus Shield</title>
+<style>
+/* load safe fallback fonts - Google Fonts blocked by MV3 CSP */
+/* ═══════════════════════════ TOKENS ═══════════════════════════ */
+:root {
+  --bg:      #060609;
+  --sf:      rgba(255,255,255,.032);
+  --sf2:     rgba(255,255,255,.058);
+  --bd:      rgba(255,255,255,.075);
+  --bd2:     rgba(255,255,255,.13);
+  --v:       #7c6af7;
+  --v2:      #a78bfa;
+  --vg:      linear-gradient(135deg,#7c6af7,#a78bfa);
+  --glow:    rgba(124,106,247,.45);
+  --green:   #34d399;
+  --gg:      linear-gradient(135deg,#34d399,#6ee7b7);
+  --red:     #f87171;
+  --amber:   #fbbf24;
+  --txt:     #f0f0f8;
+  --mid:     #7878a0;
+  --dim:     #40405a;
+  --r:       16px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;background:var(--bg);color:var(--txt);font-family:-apple-system,'Segoe UI',system-ui,sans-serif;overflow-x:hidden;line-height:1}
+
+/* ═══════════════════════════ BACKGROUND ═══════════════════════════ */
+.bglayer{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);animation:drift 20s ease-in-out infinite alternate}
+.o1{width:800px;height:800px;top:-250px;left:-200px;background:radial-gradient(circle,rgba(124,106,247,.12),transparent 65%)}
+.o2{width:600px;height:600px;bottom:-150px;right:-150px;background:radial-gradient(circle,rgba(167,139,250,.08),transparent 65%);animation-delay:-10s}
+.o3{width:450px;height:450px;top:40%;left:50%;background:radial-gradient(circle,rgba(52,211,153,.04),transparent 65%);animation-delay:-5s;animation-duration:25s;animation-name:drift3}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(45px,35px) scale(1.07)}}
+@keyframes drift3{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(calc(-50% + 30px),calc(-50% + 20px)) scale(1.05)}}
+.dotgrid{position:fixed;inset:0;z-index:0;background-image:radial-gradient(circle,rgba(255,255,255,.05) 1px,transparent 1px);background-size:28px 28px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 100%)}
+
+/* ═══════════════════════════ LAYOUT ═══════════════════════════ */
+.page{position:relative;z-index:10;min-height:100vh;display:grid;grid-template-columns:268px 1fr 268px;gap:16px;padding:22px 18px;align-items:start;max-width:1280px;margin:0 auto}
+@media(max-width:1080px){.page{grid-template-columns:1fr;max-width:540px}.col-l,.col-r{display:flex;flex-wrap:wrap;gap:12px}.col-l>*,.col-r>*{flex:1;min-width:200px}}
+
+.col-l{animation:fromL .6s cubic-bezier(.16,1,.3,1) both}
+.col-c{animation:fromB .55s cubic-bezier(.16,1,.3,1) .08s both}
+.col-r{animation:fromR .6s cubic-bezier(.16,1,.3,1) .04s both}
+@keyframes fromL{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@keyframes fromB{from{opacity:0;transform:translateY(22px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes fromR{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+
+/* ═══════════════════════════ CARD ═══════════════════════════ */
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);padding:16px;margin-bottom:12px;transition:border-color .2s,box-shadow .2s}
+.card:hover{border-color:var(--bd2);box-shadow:0 10px 36px rgba(0,0,0,.25)}
+.card:last-child{margin-bottom:0}
+.clbl{font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:1.4px;color:var(--dim);margin-bottom:13px}
+
+/* ═══════════════════════════ SCORE RING ═══════════════════════════ */
+.score-wrap{display:flex;align-items:center;gap:14px}
+.ring-bg{stroke:rgba(255,255,255,.05);fill:none;stroke-width:5}
+.ring-fill{stroke:var(--v);fill:none;stroke-width:5;stroke-linecap:round;transform-origin:center;transform:rotate(-90deg);transition:stroke-dashoffset 1.6s cubic-bezier(.16,1,.3,1);filter:drop-shadow(0 0 8px var(--glow))}
+.score-pct{font-size:30px;font-weight:700;letter-spacing:-1.5px;background:var(--vg);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.score-sub{font-size:10px;color:var(--mid);margin-top:4px}
+
+/* mini stats */
+.mg{display:flex;gap:7px;margin-bottom:12px}
+.ms{flex:1;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.055);border-radius:10px;padding:9px 6px;text-align:center}
+.mv{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:500;line-height:1;margin-bottom:4px}
+.ml{font-size:8.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+.cv{color:var(--v2)}.cg{color:var(--green)}.ca{color:var(--amber)}
+
+/* goal bar */
+.gh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
+.gl{font-size:11px;color:var(--mid)}
+.gr{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green)}
+.pt{height:5px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden}
+.pf{height:100%;background:var(--gg);border-radius:99px;box-shadow:0 0 10px rgba(52,211,153,.4);transition:width 1.4s cubic-bezier(.16,1,.3,1);width:0%}
+.gn{font-size:10px;color:var(--dim);margin-top:7px}
+
+/* quote */
+.qt{font-size:12px;font-style:italic;color:var(--mid);line-height:1.75;margin-bottom:8px}
+.qa{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim)}
+
+/* pomodoro */
+.pc{font-family:'JetBrains Mono',monospace;font-size:38px;font-weight:600;letter-spacing:5px;text-align:center;background:linear-gradient(135deg,#e0e0f0,#9090b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:5px}
+.pp{text-align:center;font-size:9.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--dim);margin-bottom:11px}
+.ptrack{height:3px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden;margin-bottom:13px}
+.pbar{height:100%;border-radius:99px;background:var(--vg);box-shadow:0 0 8px var(--glow);transition:width 1s linear}
+.pctrls{display:flex;gap:6px;justify-content:center}
+
+/* distraction counter */
+.dn{font-family:'JetBrains Mono',monospace;font-size:46px;font-weight:600;color:var(--v2);line-height:1;margin-bottom:3px}
+.ds{font-size:10px;color:var(--dim);margin-bottom:12px}
+.dtrail{display:flex;flex-wrap:wrap;gap:4px}
+.tdot{width:9px;height:9px;border-radius:3px;background:rgba(124,106,247,.15);border:1px solid rgba(124,106,247,.22);transition:all .2s}
+.tdot.lit{background:rgba(124,106,247,.65);box-shadow:0 0 6px rgba(124,106,247,.55)}
+
+/* status rows */
+.sr{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.045)}
+.sr:last-child{border-bottom:none}
+.sk{font-size:11px;color:var(--mid)}
+.badge{font-size:9.5px;font-weight:600;border-radius:6px;padding:2px 9px}
+.bon{background:rgba(52,211,153,.1);color:var(--green);border:1px solid rgba(52,211,153,.2)}
+.boff{background:rgba(248,113,113,.08);color:var(--red);border:1px solid rgba(248,113,113,.18)}
+.bbrk{background:rgba(251,191,36,.08);color:var(--amber);border:1px solid rgba(251,191,36,.18)}
+.bidle{background:rgba(255,255,255,.05);color:var(--dim);border:1px solid rgba(255,255,255,.08)}
+
+/* break list */
+.bi{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px}
+.bi:last-child{border-bottom:none}
+.bb{font-size:9px;font-weight:600;background:rgba(52,211,153,.09);color:var(--green);border:1px solid rgba(52,211,153,.18);border-radius:5px;padding:2px 7px;flex-shrink:0}
+.bt{font-family:'JetBrains Mono',monospace;color:var(--mid);font-size:11px}
+
+/* ═══════════════════════════ MAIN CARD ═══════════════════════════ */
+.main-card{background:rgba(255,255,255,.038);border:1px solid rgba(255,255,255,.09);border-radius:22px;backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);padding:30px 26px 24px;box-shadow:0 0 0 1px rgba(124,106,247,.06),0 48px 100px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06)}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.tbtime{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--dim)}
+.tbdate{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim)}
+.spill{display:inline-flex;align-items:center;gap:7px;background:rgba(248,113,113,.09);border:1px solid rgba(248,113,113,.22);border-radius:20px;padding:4px 13px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--red)}
+.sdot{width:5px;height:5px;border-radius:50%;background:var(--red);animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.shwrap{position:relative;width:60px;height:60px;margin:0 auto 20px}
+.shglow{position:absolute;inset:-14px;border-radius:50%;background:radial-gradient(circle,rgba(124,106,247,.2),transparent 70%);animation:gpulse 3s ease-in-out infinite}
+@keyframes gpulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.16)}}
+.shface{position:relative;width:60px;height:60px;background:linear-gradient(145deg,rgba(124,106,247,.2),rgba(167,139,250,.08));border:1px solid rgba(124,106,247,.3);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px}
+.mtitle{font-size:28px;font-weight:700;letter-spacing:-.8px;text-align:center;margin-bottom:8px;line-height:1.1}
+.msub{font-size:13px;color:var(--mid);text-align:center;line-height:1.65;margin-bottom:22px}
+
+/* chips */
+.rtitle{font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:1.1px;color:var(--dim);text-align:center;margin-bottom:10px}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.chip{padding:12px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.025);font-size:12px;font-weight:500;color:var(--mid);cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .2s cubic-bezier(.16,1,.3,1);user-select:none}
+.cico{font-size:20px}
+.chip:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:var(--txt);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.chip.sok{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.07);color:var(--green)}
+.chip.swarn{border-color:rgba(251,191,36,.38);background:rgba(251,191,36,.06);color:var(--amber)}
+
+/* banners */
+.wbanner{display:none;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:11px 14px;font-size:12px;color:var(--amber);line-height:1.6;margin-bottom:14px;animation:fadeUp .25s ease both}
+.sbanner{display:none;background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.17);border-radius:10px;padding:12px 15px;font-size:12px;color:var(--red);text-align:center;line-height:1.6;margin-bottom:14px}
+.cdwrap{display:none;margin-bottom:16px;animation:fadeUp .3s ease both}
+.cdtrack{height:4px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;margin-bottom:9px}
+.cdbar{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--amber),#f59e0b);box-shadow:0 0 8px rgba(251,191,36,.45);transition:width .95s linear}
+.cdlbl{font-size:12px;text-align:center;color:var(--mid)}
+.cdnum{font-family:'JetBrains Mono',monospace;color:var(--amber);font-weight:600}
+.cdcancel{cursor:pointer;text-decoration:underline;color:var(--dim)}
+
+/* buttons */
+.btn{width:100%;padding:14px;border-radius:12px;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:8px;transition:all .2s cubic-bezier(.16,1,.3,1);letter-spacing:-.1px}
+.btn:last-of-type{margin-bottom:0}
+.btnp{background:linear-gradient(135deg,#7c6af7,#5f4fd4);color:#fff;box-shadow:0 4px 20px rgba(124,106,247,.35)}
+.btnp:hover:not(:disabled){background:linear-gradient(135deg,#8d7cff,#6b5ce8);transform:translateY(-2px);box-shadow:0 10px 32px rgba(124,106,247,.5)}
+.btnp:disabled{opacity:.4;cursor:not-allowed;transform:none!important;box-shadow:none}
+.btnl{background:transparent;color:var(--mid);border:1px solid rgba(255,255,255,.075)}
+.btnl:hover{background:var(--sf2);color:var(--txt);border-color:rgba(255,255,255,.14)}
+.bylbl{text-align:center;font-size:10.5px;color:var(--dim);font-family:'JetBrains Mono',monospace;margin-top:12px}
+
+/* hardcore row */
+.hcrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:18px;padding:11px 15px;background:var(--sf);border:1px solid var(--bd);border-radius:11px}
+.hctxt .hct{font-size:12px;font-weight:500;color:var(--mid)}
+.hctxt .hcd{font-size:9.5px;color:var(--dim);margin-top:1px}
+.hcsw{position:relative;width:38px;height:20px;flex-shrink:0}
+.hcsw input{opacity:0;width:0;height:0}
+.hctr{position:absolute;inset:0;background:var(--bd);border-radius:20px;cursor:pointer;transition:background .25s}
+.hctr::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:var(--mid);border-radius:50%;transition:transform .25s,background .25s}
+.hcsw input:checked+.hctr{background:var(--red)}
+.hcsw input:checked+.hctr::before{transform:translateX(18px);background:#fff}
+
+/* icon btn */
+.ibtn{padding:7px 14px;border-radius:9px;border:1px solid var(--bd);background:var(--sf);font-size:11px;font-weight:500;color:var(--mid);cursor:pointer;transition:all .16s;font-family:'Inter',sans-serif}
+.ibtn:hover{background:var(--sf2);color:var(--txt);border-color:var(--bd2)}
+.ibtn.active{background:rgba(124,106,247,.14);border-color:rgba(124,106,247,.38);color:var(--v2)}
+
+#clkcorner{position:fixed;top:18px;right:22px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--dim);z-index:30}
+</style>
+</head>
+<body>
+
+<div class="bglayer">
+  <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+</div>
+<div class="dotgrid"></div>
+<div id="clkcorner"></div>
+
+<div class="page">
+
+  <!-- ══════════════ LEFT ══════════════ -->
+  <div class="col-l">
+
+    <div class="card">
+      <div class="clbl">Focus Score</div>
+      <div class="score-wrap">
+        <svg width="66" height="66" viewBox="0 0 66 66">
+          <circle class="ring-bg" cx="33" cy="33" r="27"/>
+          <circle class="ring-fill" id="ring" cx="33" cy="33" r="27" stroke-dasharray="169.6" stroke-dashoffset="169.6"/>
+        </svg>
+        <div>
+          <div class="score-pct" id="spct">0%</div>
+          <div class="score-sub">of daily goal</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mg">
+      <div class="ms"><div class="mv cv" id="sv-blocked">0</div><div class="ml">Blocked</div></div>
+      <div class="ms"><div class="mv cg" id="sv-saved">0m</div><div class="ml">Saved</div></div>
+      <div class="ms"><div class="mv ca" id="sv-bypass">0</div><div class="ml">Bypassed</div></div>
+    </div>
+
+    <div class="card">
+      <div class="clbl">Daily Focus Goal</div>
+      <div class="gh">
+        <span class="gl" id="g-text">0m / 4h</span>
+        <span class="gr" id="g-pct">0%</span>
+      </div>
+      <div class="pt"><div class="pf" id="g-bar"></div></div>
+      <div class="gn" id="g-note">Set your focus goal in popup settings</div>
+    </div>
+
+    <div class="card">
+      <div class="clbl">Daily Spark ✦</div>
+      <div class="qt" id="q-txt">Loading…</div>
+      <div class="qa" id="q-by"></div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════ CENTER ══════════════ -->
+  <div class="col-c">
+    <div class="main-card">
+
+      <div class="topbar">
+        <span class="tbtime" id="t-clock"></span>
+        <div class="spill"><span class="sdot"></span><span id="t-site">loading…</span></div>
+        <span class="tbdate" id="t-date"></span>
+      </div>
+
+      <div class="shwrap">
+        <div class="shglow"></div>
+        <div class="shface">🛡</div>
+      </div>
+
+      <h1 class="mtitle">Stay on track.</h1>
+      <p class="msub">You tried to open a blocked site.<br>Choose your reason to proceed.</p>
+
+      <div class="rtitle">What are you doing right now?</div>
+      <div class="chips">
+        <div class="chip" data-type="ok" data-label="Study">
+          <span class="cico">📚</span>Study
+        </div>
+        <div class="chip" data-type="ok" data-label="Coding Tutorial">
+          <span class="cico">💻</span>Coding Tutorial
+        </div>
+        <div class="chip" data-type="ok" data-label="Music while working">
+          <span class="cico">🎧</span>Music while working
+        </div>
+        <div class="chip" data-type="warn" data-label="Entertainment">
+          <span class="cico">🎬</span>Entertainment
+        </div>
+      </div>
+
+      <div class="wbanner" id="wbanner">⚠️ <strong>Entertainment?</strong> — You're in focus time. This will break your flow. Are you sure?</div>
+      <div class="sbanner" id="sbanner">🔒 <strong>Hardcore Focus Mode</strong> is active. No bypass is allowed until you disable it below.</div>
+
+      <div class="cdwrap" id="cdwrap">
+        <div class="cdtrack"><div class="cdbar" id="cdbar" style="width:100%"></div></div>
+        <div class="cdlbl">Opening in <span class="cdnum" id="cdnum">5</span>s — <span class="cdcancel" id="cdcancel">Cancel</span></div>
+      </div>
+
+      <button class="btn btnp" id="btnp" disabled>Select a reason above to proceed</button>
+      <button class="btn btnl" id="btnl">← Take me back to Google</button>
+      <div class="bylbl">⏱ 2 min access granted on proceed</div>
+
+      <div class="hcrow">
+        <div class="hctxt">
+          <div class="hct">🔥 Hardcore Focus Mode</div>
+          <div class="hcd">Disables all bypass options</div>
+        </div>
+        <label class="hcsw">
+          <input type="checkbox" id="hctoggle">
+          <span class="hctr"></span>
+        </label>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════ RIGHT ══════════════ -->
+  <div class="col-r">
+
+    <div class="card">
+      <div class="clbl">Pomodoro Timer</div>
+      <div class="pc" id="pomoclock">25:00</div>
+      <div class="pp" id="pomophase">Ready to focus</div>
+      <div class="ptrack"><div class="pbar" id="pomobar" style="width:100%"></div></div>
+      <div class="pctrls">
+        <button class="ibtn" id="pomobtn">▶ Start</button>
+        <button class="ibtn" id="pomoreset">↺ Reset</button>
+        <button class="ibtn" id="pomoskip">⏭ Skip</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="clbl">Distraction Counter</div>
+      <div class="dn" id="dcount">0</div>
+      <div class="ds">attempts today</div>
+      <div class="dtrail" id="dtrail"></div>
+    </div>
+
+    <div class="card">
+      <div class="clbl">Shield Status</div>
+      <div class="sr"><span class="sk">Blocking</span><span class="badge bon" id="st-shield">Active</span></div>
+      <div class="sr"><span class="sk">Break Window</span><span class="badge bidle" id="st-break">Not Set</span></div>
+      <div class="sr"><span class="sk">Hardcore Mode</span><span class="badge bidle" id="st-hc">Off</span></div>
+      <div class="sr"><span class="sk">Pomodoro</span><span class="badge bidle" id="st-pomo">Idle</span></div>
+    </div>
+
+    <div class="card">
+      <div class="clbl">Today's Break Windows</div>
+      <div id="bwlist" style="color:var(--dim);font-size:11px">No breaks configured</div>
+    </div>
+
+  </div>
+</div>
+
+<script src="focus.js"></script>
+</body>
+</html>
